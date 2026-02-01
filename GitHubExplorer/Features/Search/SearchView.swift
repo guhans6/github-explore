@@ -10,6 +10,7 @@ import SwiftUI
 struct SearchView: View {
     
     @State var vm: SearchViewModel
+    @State var columnVisibility = NavigationSplitViewVisibility.all
     
     init() {
         _vm = State(initialValue: SearchViewModel())
@@ -22,7 +23,7 @@ struct SearchView: View {
     ]
     
     var body: some View {
-        NavigationSplitView {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
             ZStack {
                 switch vm.state {
                 case .initial:
@@ -101,6 +102,9 @@ struct SearchView: View {
                     UserCell(user: user)
                         .onTapGesture {
                             vm.selectedUser = user
+//                            if UIDevice.current.userInterfaceIdiom == .pad {
+//                                columnVisibility = .detailOnly
+//                            }
                         }
                 }
             }
