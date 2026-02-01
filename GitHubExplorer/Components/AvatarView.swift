@@ -26,7 +26,7 @@ struct AvatarView: View {
             }
         }
         .clipShape(.circle)
-        .task {
+        .task(id: urlString) {
             await imageLoader.loadImage(from: urlString)
         }
         .frame(width: size, height: size)

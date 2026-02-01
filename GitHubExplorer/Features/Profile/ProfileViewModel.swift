@@ -11,27 +11,45 @@ import SwiftUI
 @MainActor
 class ProfileViewModel {
     
-    let user: User
+    enum ProfileFetchState {
+        case initial
+        case loading
+        case success(UserDetail)
+        case error(String)
+    }
+    
+    var profileState: ProfileFetchState = .initial
+    var isProfileLoading: Bool {
+        if case .loading = profileState {
+            return true
+        }
+        return false
+    }
+    
+    var user: User?
     var userDetail: UserDetail?
     var isRepoListOpen: Bool = false
     
     private let networkService: any NetworkServiceProtocol
     
-    var isLoading: Bool {
-        userDetail == nil
-    }
-    
-    init(user: User, networkService: (any NetworkServiceProtocol)? = nil) {
-        self.user = user
+    init(networkService: (any NetworkServiceProtocol)? = nil) {
         self.networkService = networkService ?? NetworkService()
     }
     
-    func fetchUserDetails() async {
+    func fetchUserDetails(for user: User) async {
+        profileState = .loading
+        self.user = user
         do {
-            self.userDetail = try await networkService.getUserDetail(username: user.username)
-            print("Data Recieved")
+            let userDetail = try await networkService.getUserDetail(username: user.username)
+            self.userDetail = userDetail
+            self.profileState = .success(userDetail)
+        } catch let error as NetworkError {
+            profileState = .error(error.localizedDescription)
+        } catch is CancellationError {
+            return
         } catch {
-            print("fetchUserDetails error \(error.localizedDescription)")
+            print(error.localizedDescription)
+            profileState = .error("An unexpected error has occured")
         }
     }
 }

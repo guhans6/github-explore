@@ -9,15 +9,12 @@ import SwiftUI
 
 struct ProfileView: View {
     
-    @State private var vm: ProfileViewModel
+    let user: User
+    @State private var vm: ProfileViewModel = ProfileViewModel()
     @Environment(\.openURL) private var openURL
     
     enum ProfileRoute: Hashable {
         case repositoryList
-    }
-    
-    init(user: User) {
-        _vm = State(initialValue: ProfileViewModel(user: user))
     }
     
     var body: some View {
@@ -25,12 +22,17 @@ struct ProfileView: View {
             VStack {
                 //MARK: WHAT SHOULD BE THE HANDLING? SHOW USER DATA WE HAVE AND USER SEPERATE LOADING FOR BELOW?
                 //MARK: OR SHOW LOADING FULLY FOR PAGE AND ONLY SHOW USERDETAIL MODEL?
-                AvatarView(urlString: vm.user.avatarURL, size: 120)
-                Text(vm.user.username)
+                AvatarView(urlString: user.avatarURL, size: 120)
+//                    .id(user.id)  //This redraws the whole view if id changes
+                Text(user.username)
                     .font(.title3)
-                    .padding(.top   )
-                if let userDetail = vm.userDetail {
-                    //Conversion below is maybe wrong
+                    .padding(.top)
+                switch vm.profileState {
+                case .initial, .loading:
+                    ProgressView()
+                        .progressViewStyle(.circular)
+                        .padding(.top)
+                case .success(let userDetail):
                     if let bio = userDetail.bio {
                         Text(bio)
                             .font(.title3)
@@ -38,10 +40,8 @@ struct ProfileView: View {
                     }
                     FollowStatsView(followers: userDetail.followers.formattedCompactString(), following: userDetail.following.formattedCompactString(), repositories: userDetail.publicRepos.formattedCompactString())
                         .frame(width: 250)
-                } else {
-                    ProgressView()
-                        .progressViewStyle(.circular)
-                        .padding(.top)
+                case .error(let errorString):
+                    ContentUnavailableView(errorString, systemImage: "exclamationmark.triangle")
                 }
             }
             .padding(.bottom, 100)
@@ -50,12 +50,13 @@ struct ProfileView: View {
                 NavigationLink(value: ProfileRoute.repositoryList) {
                     ExplorerButtonLabel(text: "View Repositories", systemImage: "list.dash")
                 }
+                .disabled(vm.isProfileLoading)
                 .frame(width: 300)
                 .tint(.green)
                 .buttonStyle(.borderedProminent)
                 .buttonBorderShape(.roundedRectangle(radius: 10))
                 .controlSize(.large)
-                Link(destination: APIConfig.githubBaseURL.appending(path: vm.user.username)) {
+                Link(destination: APIConfig.githubBaseURL.appending(path: user.username)) {
                     ExplorerButtonLabel(text: "View Full Profile", systemImage: "person.and.background.striped.horizontal")
                 }
 //                Button {
@@ -76,11 +77,12 @@ struct ProfileView: View {
         .navigationDestination(for: ProfileRoute.self, destination: { route in
             switch route {
             case .repositoryList:
-                RepositoriesView(user: vm.user)
+                RepositoriesView(user: user)
             }
         })
-        .task {
-            await vm.fetchUserDetails()
+        //With this we can just update the data instead of redrawing the while view
+        .task(id: user.id) {
+            await vm.fetchUserDetails(for: user)
         }
     }
 }
