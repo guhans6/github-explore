@@ -36,6 +36,7 @@ struct RepositoryDetailView: View {
                                 .foregroundStyle(.cyan)
                         }
                     }
+                    .padding()
                     Text(vm.descriptionText)
                         .font(.headline)
                         .fontWeight(.medium)
@@ -57,8 +58,8 @@ struct RepositoryDetailView: View {
                     LabeledContent("Default Branch:", value: vm.repository.defaultBranch)
 
                     LabeledContent("Visibility:", value: vm.repository.visibility)
-                    LabeledContent("Created:", value: vm.repository.createdAt?.formattedDisplayDate() ?? "")
-                    LabeledContent("Updated:", value: vm.repository.updatedAt?.formattedDisplayDate() ?? "")
+                    LabeledContent("Created:", value: vm.repository.createdAt?.formattedDisplayDate() ?? "-")
+                    LabeledContent("Updated:", value: vm.repository.updatedAt?.formattedDisplayDate() ?? "-")
                 }
                 .fontWeight(.medium)
                 
