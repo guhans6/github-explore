@@ -11,21 +11,21 @@ import SwiftUI
 @Observable
 class SearchViewModel {
     
-    let networkService: NetworkServiceProtocol
-    var dummyData: [DummyData] = []
+    private let networkService: NetworkServiceProtocol
     var users: [User] = []
+    var selectedUser: User? 
     var searchText: String = ""
     
     private var searchedUsers: [User] = []
     
-    var searchTask: Task<Void, Never>?
-    var sampleTask: Task<User, Error>?
+    private var searchTask: Task<Void, Never>?
     
     enum SearchState {
         case initial
         case loading
+        case emptyResult
         case success([User])
-        case error(String?)
+        case error(String)
     }
     var state: SearchState = .initial
     
@@ -43,7 +43,7 @@ class SearchViewModel {
         
         state = .loading
         searchTask = Task {
-            try? await Task.sleep(for: .microseconds(400))
+            try? await Task.sleep(for: .milliseconds(400))
             try? Task.checkCancellation()
             await searchUser()
         }
@@ -52,11 +52,19 @@ class SearchViewModel {
     private func searchUser() async {
         do {
             let response = try await networkService.searchUser(searchText: searchText)
+            if response.users.isEmpty {
+                state = .emptyResult
+                return
+            }
             searchedUsers = response.users
             state = .success(searchedUsers)
+        } catch let error as NetworkError {
+            state = .error(error.localizedDescription)
+        } catch is CancellationError {
+            return
         } catch {
             print(error.localizedDescription)
-            state = .error(nil)
+            state = .error("An unexpected error has occured")
         }
     }
     
