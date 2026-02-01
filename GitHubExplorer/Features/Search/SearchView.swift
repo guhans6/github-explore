@@ -22,7 +22,7 @@ struct SearchView: View {
     ]
     
     var body: some View {
-        NavigationStack {
+        NavigationSplitView {
             ZStack {
                 switch vm.state {
                 case .initial:
@@ -34,30 +34,74 @@ struct SearchView: View {
                 case .success(let users):
                     userGridView(users)
                 case .error(let error):
-                    EmptyStateView(imageName: "magnifyingglass", title: error ?? "No users found")
+                    //iOS SDK Provided
+                    ContentUnavailableView(error, systemImage: "exclamationmark.triangle")
+                case .emptyResult:
+                    ContentUnavailableView("No users found", systemImage: "person.slash")
                 }
             }
             .navigationTitle("GitHub Explore")
-            .navigationDestination(for: User.self, destination: { user in
-                ProfileView(user: user)
-            })
             .searchable(text: $vm.searchText)
             .onChange(of: vm.searchText) {
                 vm.onSearchTextChange()
             }
-            .task {
+            //MARK: .task with id has automatic cancellation
+//            .task(id: vm.searchText) {
+//                await vm.onSearchTextChange()
+//            }
+//            .task {
 //                await viewModel.fetchUserList()
+//            }
+        } detail: {
+            if let selectedUser = vm.selectedUser {
+                NavigationStack {
+                    ProfileView(user: selectedUser)
+                }
+            } else {
+                ContentUnavailableView("Select a user", systemImage: "person.crop.circle")
             }
         }
+
+//        NavigationStack {
+//            ZStack {
+//                switch vm.state {
+//                case .initial:
+//                    EmptyStateView(imageName: "magnifyingglass", title: "Search Github users")
+//                case .loading:
+//                    ProgressView()
+//                        .progressViewStyle(.circular)
+//                        .frame(width: 30, height: 30)
+//                case .success(let users):
+//                    userGridView(users)
+//                case .error(let error):
+//                    EmptyStateView(imageName: "magnifyingglass", title: error ?? "No users found")
+//                }
+//            }
+//            .navigationTitle("GitHub Explore")
+//            .navigationDestination(for: User.self, destination: { user in
+//                ProfileView(user: user)
+//            })
+//            .searchable(text: $vm.searchText)
+//            .onChange(of: vm.searchText) {
+//                vm.onSearchTextChange()
+//            }
+//            .task {
+//                await viewModel.fetchUserList()
+//            }
+//        }
     }
     
     private func userGridView(_ users: [User]) -> some View {
         ScrollView {
             LazyVGrid(columns: gridItem) {
                 ForEach(users) { user in
-                    NavigationLink(value: user) {
-                        UserCell(user: user)
-                    }
+//                    NavigationLink(value: user) {
+//                        UserCell(user: user)
+//                    }
+                    UserCell(user: user)
+                        .onTapGesture {
+                            vm.selectedUser = user
+                        }
                 }
             }
             // Fix for navigation tile glitch
@@ -69,7 +113,6 @@ struct SearchView: View {
 
 #Preview {
     SearchView()
-//        UserCell(userName: "defunkt")
 }
 
 struct EmptyStateView: View {
@@ -88,7 +131,7 @@ struct EmptyStateView: View {
         VStack {
             Image(systemName: imageName)
                 .resizable()
-                .frame(width: 100, height: 100)
+                .frame(width: 70, height: 70)
                 .opacity(0.5)
             Text(title)
                 .font(.title2)
