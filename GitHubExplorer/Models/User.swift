@@ -33,6 +33,16 @@ struct UserDetail: Decodable {
         case publicRepos = "public_repos"
         case followers, following
     }
+    
+    init(user: User, name: String?, email: String?, bio: String?, publicRepos: Int, followers: Int, following: Int) {
+        self.user = user
+        self.name = name
+        self.email = email
+        self.bio = bio
+        self.publicRepos = publicRepos
+        self.followers = followers
+        self.following = following
+    }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
