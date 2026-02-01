@@ -1,10 +1,6 @@
 # GitHub Explorer
 
-A native iOS application built with SwiftUI to explore GitHub users and their repositories using the GitHub REST API.
-
-## Overview
-
-A simple SwiftUI application built to explore the GitHub API. This project was created to practice modern iOS development patterns and Swift's latest features.
+A simple SwiftUI application built to explore the GitHub users and their repositories. This project was created to practice modern iOS development patterns and Swift's latest features.
 
 ## Architecture & Technologies
 
